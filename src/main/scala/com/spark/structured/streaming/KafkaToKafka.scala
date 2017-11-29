@@ -16,16 +16,14 @@ object KafkaToKafka extends App{
     logger.info("Creating sparkSession")
 
     spark = SparkSession.builder().master("local[*]").appName("testing_kafka").getOrCreate()
-    
-    val s = spark
-
-    import s.implicits._
+  
+    import spark.implicits._
 
     logger.info("creating inputstream")
 
     val inputStream = spark.readStream
       .format("kafka")
-      .option("kafka.bootstrap.servers", "172.24.30.136:9092")
+      .option("kafka.bootstrap.servers", "localhost:9092")
       .option("subscribe", "InputTopic")
       .option("startingOffsets", "earliest")
       .option("failOnDataLoss", "false")
@@ -37,19 +35,19 @@ object KafkaToKafka extends App{
     val outputStream = inputStream.writeStream
       .format("Kafka")
       .option("checkpointLocation", "hdfs://localhost:54310/")
-      .option("kafka.bootstrap.servers", "172.24.30.136:9092")
+      .option("kafka.bootstrap.servers", "localhost:9092")
       .option("topic", "OutputTopic")
       .queryName("MetricsSample")
       .start()
     outputStream.status
 
 
-    spark.streams.awaitAnyTermination()
-    spark.stop
+
 
      } catch {
-    case ex: Exception => logger.error(ex.getMessage)
-
+         case ex: Exception => logger.error(ex.getMessage)
   }
+    spark.streams.awaitAnyTermination()
+    spark.stop
 
 }
